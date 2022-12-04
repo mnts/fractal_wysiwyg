@@ -5,16 +5,21 @@ import 'dart:convert';
 import 'dart:math';
 import 'dart:ui';
 import 'package:zefyrka/zefyrka.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 
 class ReSlide extends StatefulWidget {
   Widget? background;
-  FutureOr<String?> Function() loader;
+  String text;
+  FutureOr<String?>? Function()? loader;
   FutureOr<bool>? Function(String data)? saver;
+  List<Widget> ctrls;
   ReSlide({
     super.key,
+    this.text = '',
     this.background,
-    required this.loader,
-    required this.saver,
+    this.ctrls = const [],
+    this.loader,
+    this.saver,
   });
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey();
 
@@ -39,7 +44,7 @@ class _RefractalSlideState extends State<ReSlide>
   initMatrix() {}
 
   load() async {
-    final cont = await widget.loader() ?? '';
+    final cont = await widget.loader?.call() ?? '';
 
     if (cont.isNotEmpty) {
       try {
@@ -96,26 +101,40 @@ class _RefractalSlideState extends State<ReSlide>
             child: ClipRRect(
               // Clip it cleanly.
               child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+                filter: ImageFilter.blur(sigmaX: 5, sigmaY: 6),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: theme.canvasColor.withAlpha(200),
+                    color: theme.canvasColor.withAlpha(180),
                     borderRadius: const BorderRadius.all(
-                      Radius.circular(5),
+                      Radius.circular(8),
                     ),
                   ),
                   width: min(mq.size.width, 800),
-                  child: ZefyrField(
-                    controller: _controller!,
-                    focusNode: focusNode,
-                    // readOnly: true,
-                    padding: const EdgeInsets.only(
-                      top: 4,
-                      left: 16,
-                      right: 16,
-                    ),
-                    //onLaunchUrl: _launchUrl,
-                  ),
+                  child: widget.text.isNotEmpty
+                      ? Container(
+                          padding: const EdgeInsets.all(24),
+                          child: MarkdownBody(
+                            data: widget.text,
+                            selectable: true,
+                            styleSheet: MarkdownStyleSheet(
+                              p: const TextStyle(
+                                fontSize: 18,
+                                height: 1.4,
+                              ),
+                            ),
+                          ),
+                        )
+                      : ZefyrField(
+                          controller: _controller!,
+                          focusNode: focusNode,
+                          // readOnly: true,
+                          padding: const EdgeInsets.only(
+                            top: 4,
+                            left: 16,
+                            right: 16,
+                          ),
+                          //onLaunchUrl: _launchUrl,
+                        ),
                 ),
               ),
             ),
@@ -124,7 +143,9 @@ class _RefractalSlideState extends State<ReSlide>
             Positioned(
               bottom: 70,
               left: 0,
+              right: 0,
               child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   IconButton(
                     color: theme.canvasColor.withAlpha(200),
@@ -142,6 +163,17 @@ class _RefractalSlideState extends State<ReSlide>
                     ),
                     child: ZefyrToolbar.basic(controller: _controller!),
                   ),
+                ],
+              ),
+            ),
+          if (widget.ctrls.isNotEmpty)
+            Positioned(
+              top: 70,
+              left: 8,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  ...widget.ctrls,
                 ],
               ),
             ),
